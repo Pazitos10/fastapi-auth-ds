@@ -1,16 +1,25 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router';
+import React, { useEffect, useState } from 'react';
+import { Link, Navigate } from 'react-router';
+import { useAuth } from '../../hooks';
 
 export const Login: React.FC = () => {
-    const [email, setEmail] = useState('');
+    const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
-    // const { login } = useAuth(); // (Assuming your logic hook)
+    const { currentUser, isAuthenticated, isLoading, login, error } = useAuth();
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        // login(email, password);
-        console.log('Inicio de sesión:', { email, password });
+        login({username, password});
     };
+
+    // useEffect(() => {
+    //     console.log({currentUser})
+    // }, []);
+    if (isLoading)
+        return <div>Cargando datos del usuario...</div>
+
+    if (isAuthenticated)
+        return (<Navigate to="/" replace />)
 
     return (
         <div>
@@ -24,12 +33,12 @@ export const Login: React.FC = () => {
                     padding: '10px 50px'
                 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-                    <label htmlFor="email">Correo Electrónico</label>
+                    <label htmlFor="username">Nombre de usuario</label>
                     <input
-                        id="email"
-                        type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
+                        id="username"
+                        type="text"
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
                         required
                     />
                 </div>
@@ -43,6 +52,7 @@ export const Login: React.FC = () => {
                         required
                     />
                 </div>
+                {error ? <p style={{ color: 'red', fontSize: '.8em'}}>{error}</p> : null}
                 <button type="submit" style={{ marginTop: 20 }}>
                     Iniciar Sesión
                 </button>

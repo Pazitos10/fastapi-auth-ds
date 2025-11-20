@@ -8,34 +8,31 @@ def main():
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
 
-    rol_admin = Role(name="admin")
-    rol_user = Role(name="user")
+    roles = [
+        "user",
+        "admin",
+        "alumno",
+        "docente",
+        "secretaria_academica",
+    ]
+    for rol in roles:
+        rol_usuario = Role(name=rol)
+        db.add(rol_usuario)
+        db.commit()
+        db.refresh(rol_usuario)
 
-    db.add_all([rol_admin, rol_user])
-    db.commit()
+        usuario = create_user(
+            db,
+            UserCreate(
+                username=rol, email=f"{rol}@gmail.com", password="123456789"
+            ),
+        )
 
-    usuario_admin = create_user(
-        db,
-        UserCreate(
-            username="admin", email="admin@gmail.com", password="mipasswordsuperseguro"
-        ),
-    )
+        db.add(usuario)
+        db.commit()
 
-    usuario_normal = create_user(
-        db,
-        UserCreate(
-            username="normal",
-            email="usuario1@gmail.com",
-            password="mipasswordsuperseguro",
-        ),
-    )
+        assign_role(db=db, user_id=usuario.id, role_id=rol_usuario.id)
 
-    db.add_all([usuario_admin, usuario_normal])
-    db.commit()
-
-    assign_role(db=db, user_id=usuario_admin.id, role_id=rol_admin.id)
-    assign_role(db=db, user_id=usuario_normal.id, role_id=rol_user.id)
-    
     db.close()
 
 

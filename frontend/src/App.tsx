@@ -1,11 +1,17 @@
 import './App.css'
-import { Outlet } from 'react-router'
-import UserProfile from './features/user/UserProfile';
+import { Navigate } from 'react-router';
+import { useAuth } from './hooks';
+import { MenuPrincipal } from './features/menu/MenuPrincipal';
+
 
 function App() {
+  const { isAuthenticated } = useAuth();
+
   return (
-    <UserProfile userId={1} />
-  );
+    <>
+      {isAuthenticated ? <MenuPrincipal /> : <Navigate to="/iniciar-sesion" replace /> }
+    </>
+  )
 }
 
 export default App

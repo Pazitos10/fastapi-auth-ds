@@ -1,7 +1,10 @@
 import { useState } from "react";
 import { Link } from "react-router";
+import { useAuth } from "../../hooks";
 
-export const Register = () => {
+
+export const Registrar = () => {
+    const { register, error } = useAuth();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [username, setUsername] = useState('');
@@ -10,7 +13,7 @@ export const Register = () => {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        // login(email, password);
+        register({ username, email, password });
         console.log('Creando cuenta:', { username, email, password });
     };
 
@@ -56,10 +59,11 @@ export const Register = () => {
                         required
                     />
                 </div>
+                {error ? <p style={{ color: 'red', fontSize: '.8em' }}>{error}</p> : null}
                 <button type="submit" style={{ marginTop: 20 }}>
                     Crear
                 </button>
-
+                
                 <p className="auth-links">
                     <Link to="/iniciar-sesion">Ya tengo una cuenta</Link>
                 </p>

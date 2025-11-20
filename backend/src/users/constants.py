@@ -1,6 +1,6 @@
 class ErrorCode:
     ROLE_NOT_FOUND = "Rol no encontrado"
-    USER_NOT_FOUND = "Usuario no encontrado"
+    USER_NOT_FOUND = "Usuario o contraseña incorrectos"
     USERNAME_TAKEN = "Otro usuario ya tiene este username"
     # TODO: cambiar el siguiente mensaje de acuerdo a los criterios de validación de un password
     USER_INVALID_PASSWORD = (

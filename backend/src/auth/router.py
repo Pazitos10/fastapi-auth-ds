@@ -1,9 +1,9 @@
-from fastapi import Depends, APIRouter, Response
+from fastapi import Depends, APIRouter, Request, Response, exceptions
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from typing import Dict, Any
 from src.database import get_db
-from src.settings import get_refresh_token_settings
+from src.settings import get_delete_token_settings, get_refresh_token_settings
 from src.auth import service
 from src.auth import schemas
 from src.auth.utils import create_access_token, create_refresh_token
@@ -18,7 +18,7 @@ from src.users import service as users_service
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-@router.post("/token")
+@router.post("/token", response_model=schemas.Token)
 async def login(
     response: Response,
     form_data: OAuth2PasswordRequestForm = Depends(),
@@ -26,12 +26,10 @@ async def login(
 ) -> schemas.Token:
     user = service.authenticate_user(form_data.username, form_data.password, db)
     refresh_token_value = await create_refresh_token(db, user.id)
+    access_token = create_access_token(user)
     response.set_cookie(**get_refresh_token_settings(refresh_token_value))
 
-    return schemas.Token(
-        access_token=create_access_token(user),
-        refresh_token=refresh_token_value
-    )
+    return schemas.Token(access_token=access_token, user_id=user.id)
 
 
 @router.put("/token", response_model=schemas.Token)
@@ -45,6 +43,7 @@ async def refresh_tokens(
     new_refresh_token = await create_refresh_token(
         db, refresh_token.user_id
     )
+    response.set_cookie(**get_refresh_token_settings(new_access_token))
     response.set_cookie(**get_refresh_token_settings(new_refresh_token))
 
     return schemas.Token(access_token=new_access_token, refresh_token=new_refresh_token)
@@ -59,10 +58,10 @@ def register_user(user: users_schemas.UserCreate, db: Session = Depends(get_db))
 @router.delete("/token")
 async def logout_user(
     response: Response,
-    refresh_token: Dict[str, Any] = Depends(valid_refresh_token),
+    #refresh_token: str = Depends(valid_refresh_token),
 ) -> dict:
     response.delete_cookie(
-        **get_refresh_token_settings(refresh_token.refresh_token, expired=True)
+        **get_delete_token_settings()
     )
 
     return {
@@ -94,3 +93,15 @@ async def password_reset(
     db: Session = Depends(get_db),
 ) -> schemas.PasswordUpdated:
     return service.reset_user_password(db, user, password_reset_data)
+
+
+@router.get("/validate-user", response_model=schemas.Token)
+async def validate_user(
+    response: Response,
+    auth_user=Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> schemas.Token:
+    if auth_user:
+        access_token = create_access_token(auth_user)
+        return schemas.Token(access_token=access_token, user_id=auth_user.id)
+    raise exceptions.NotAuthenticated()
