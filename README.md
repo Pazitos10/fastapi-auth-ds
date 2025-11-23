@@ -155,6 +155,8 @@ Por supuesto, esto requeriría modificar el hook `useEncuestas` para:
 
 El hook `useAuth` tiene a disposición variables de estado/setters como `error`/`setError` y `isLoading`/`setIsLoading` que podemos reutilizar para mostrar mensajes de error o de contenido especial para cuando la API está demorando en contestar algún request.
 
+Por otra parte, en la ruta consultada por `useEncuestas` debería hacerse el control del rol del usuario para que solo pueda acceder a las encuestas si tiene el rol "alumno", al mismo tiempo que filtrarlas para devolver solo aquellas que le pertenecen al usuario en cuestión.
+
 Finalmente, los componentes que devuelve JSX o TSX deben ser adaptados para que utilicen los mismos componentes con estilo que utilice nuestro proyecto ya que en este repositorio solo cuentan con HTML/CSS básico para los fines demostrativos. 
 
 ### TODO:
