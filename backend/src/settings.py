@@ -7,6 +7,7 @@ load_dotenv()
 ENV = os.getenv("ENV")
 ALGORITHM = os.getenv("ALGORITHM")
 SECRET_KEY = os.getenv("SECRET_KEY")
+REFRESH_SECRET_KEY = os.getenv("REFRESH_SECRET_KEY")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
 REFRESH_TOKEN_EXPIRE_DAYS = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS"))
 TOKEN_URL = os.getenv("TOKEN_URL")
@@ -22,9 +23,10 @@ def get_base_cookie_config(key: str) -> Dict:
     return {
         "key": key,
         "httponly": True,
-        "samesite": "none",
+        "samesite": "lax",
         "secure": SECURE_COOKIES,
         "domain": API_SITE_DOMAIN,
+        "path": "/"
     }
 
 def get_token_settings(key: str, token: str, max_age: int) -> Dict[str, Any]:
@@ -36,16 +38,10 @@ def get_token_settings(key: str, token: str, max_age: int) -> Dict[str, Any]:
         "max_age": max_age,
     }
 
-def get_access_token_settings(access_token: str) -> Dict[str, Any]:
-    return get_token_settings(
-        access_token, ACCESS_TOKEN_COOKIE_NAME, ACCESS_TOKEN_EXPIRE_MINUTES
-    )
-
 def get_refresh_token_settings(refresh_token: str) -> Dict[str, Any]:
     refresh_token = get_token_settings(
         REFRESH_TOKEN_COOKIE_NAME, refresh_token, REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60
     )
-    print(f"{refresh_token=}")
     return refresh_token 
 
 def get_delete_token_settings() -> None: 

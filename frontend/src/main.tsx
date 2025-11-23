@@ -3,11 +3,10 @@ import { createRoot } from 'react-dom/client'
 import { BrowserRouter, Route, Routes } from "react-router";
 import AuthLayout from './layouts/AuthLayout.tsx';
 import App from './App.tsx'
-import { Login, NoAutorizado, NuevaPassword, RecuperarPassword, Registrar } from './features/auth';
+import { Login, NoAutorizado, NuevaPassword, RecuperarPassword, Registrar, ResetPassword } from './features/auth';
 import { AuthProvider } from './context/AuthContext.tsx';
 import { ProtectedRoute } from './components/ProtectedRoute.tsx';
 import {Encuestas, InformesAC, InformesSinteticos, PerfilUsuario} from './features/user';
-
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -28,11 +27,12 @@ createRoot(document.getElementById('root')!).render(
                 <Route path="/informes" element={<InformesSinteticos />} />
               </Route>
 
-              <Route element={<ProtectedRoute allowedRoles={["admin", "alumno", "docente", "secretaria"]} />}>
+              <Route element={<ProtectedRoute allowedRoles={["admin", "alumno", "docente", "secretaria", "user"]} />}>
                 <Route path="/" element={<App />} />
                 <Route path="/perfil" element={<PerfilUsuario />} />
+                <Route path="/cambiar-contraseña" element={<ResetPassword />} />
               </Route>
-            
+
             </Route>
 
             <Route path="iniciar-sesion" element={<Login />} />

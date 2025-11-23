@@ -9,8 +9,9 @@ export interface RegisterData extends LoginData {
     email: string
 }
 
-export interface RecoverPasswordData {
-    email: string
+export interface ResetPasswordData {
+    current_password: string,
+    new_password: string
 }
 
 export interface AuthContextType {
@@ -18,10 +19,11 @@ export interface AuthContextType {
     isLoading: boolean;
     error: string | null;
     isAuthenticated: boolean;
-    login: (loginData: LoginData) => Promise<void>;
+    setError: (value: string | null) => void;
+    login: (loginData: LoginData) => Promise<boolean>;
     logout: () => Promise<void>;
-    register: (registerData: RegisterData) => Promise<void>;
-    // recoverPassword: (recoverPasswordData: RecoverPasswordData) => Promise<null>
+    register: (registerData: RegisterData) => Promise<boolean>;
+    resetPassword: (resetPasswordData: ResetPasswordData) => Promise<boolean>;
 }
 
 export interface ValidateUserData {

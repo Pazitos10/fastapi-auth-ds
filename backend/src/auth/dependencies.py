@@ -1,17 +1,23 @@
 import jwt
-from fastapi import Depends, HTTPException, Request, status
+from datetime import datetime
+from fastapi import Depends, Request
 from fastapi.security import OAuth2PasswordBearer
-from pydantic import ValidationError
 from sqlalchemy import select
 from sqlalchemy.orm import Session
-from typing import Annotated, Dict, Any, Union
-from jwt.exceptions import InvalidTokenError
-from src.exceptions import PermissionDenied
+from jwt.exceptions import (
+    InvalidTokenError,
+    ExpiredSignatureError,
+)
 from src.database import get_db
-from src.settings import REFRESH_TOKEN_COOKIE_NAME, TOKEN_URL, SECRET_KEY, ALGORITHM
+from src.settings import (
+    REFRESH_SECRET_KEY,
+    REFRESH_TOKEN_COOKIE_NAME,
+    TOKEN_URL,
+    SECRET_KEY,
+    ALGORITHM)
 from src.auth.schemas import TokenData
-from src.auth.utils import _is_valid_refresh_token, parse_refresh_token
-from src.auth import exceptions
+from src.auth.utils import _is_valid_refresh_token
+from src.auth import exceptions, constants
 from src.users import service as users_service
 from src.users import models as users_models
 from src.users import schemas as users_schemas
@@ -25,17 +31,38 @@ def get_token_from_cookie(request: Request) -> str:
     Si el token no existe, lanza la excepción NotAuthenticated()
     """
     token = request.cookies.get(REFRESH_TOKEN_COOKIE_NAME)
-
     if not token:
-        raise exceptions.NotAuthenticated()
+        raise exceptions.RefreshTokenNotValid()
     return token
 
+async def get_refresh_user(
+    db: Session = Depends(get_db),
+    token: str = Depends(get_token_from_cookie),    
+):
+    """Obtiene el objeto User (DB) que está asociado al refresh token."""
+    try:
+        payload = jwt.decode(token, REFRESH_SECRET_KEY, algorithms=[ALGORITHM])
+        expires_at = datetime.fromtimestamp(payload.get("exp"))
+        if not _is_valid_refresh_token(expires_at):
+            raise exceptions.RefreshTokenNotValid()
+        else:
+            user_str = payload.get("sub")
+            if user_str is None:
+                raise exceptions.InvalidCredentials()
+            user = users_schemas.User.model_validate_json(user_str)
+            token_data = TokenData(username=user.username)
+    except InvalidTokenError as e:
+        raise exceptions.RefreshTokenNotValid()
+    user = users_service.get_user_by_username(db, username=token_data.username)
+    if user is None:
+        raise exceptions.InvalidCredentials()
+    return user
 
 async def get_current_user(
     db: Session = Depends(get_db),
-    token: str = Depends(get_token_from_cookie),
+    token: str = Depends(oauth2_scheme),
 ):
-    """Obtiene el objeto User (DB) que está asociado al token."""
+    """Obtiene el objeto User (DB) que está asociado al access token."""
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         user_str = payload.get("sub")
@@ -43,37 +70,12 @@ async def get_current_user(
             raise exceptions.InvalidCredentials()
         user = users_schemas.User.model_validate_json(user_str)
         token_data = TokenData(username=user.username)
-    except InvalidTokenError:
+    except ExpiredSignatureError:
         raise exceptions.NotAuthenticated()
     user = users_service.get_user_by_username(db, username=token_data.username)
     if user is None:
         raise exceptions.InvalidCredentials()
     return user
-
-
-async def valid_refresh_token(
-    refresh_token: str,
-) -> Dict[str, Any]:
-    """Verifica que el refresh_token es válido"""
-    parsed_token = parse_refresh_token(refresh_token)
-
-    if not _is_valid_refresh_token(parsed_token.expires_at):
-        raise exceptions.RefreshTokenNotValid()
-
-    return parsed_token
-
-
-async def valid_refresh_token_user(
-    refresh_token: Dict[str, Any] = Depends(valid_refresh_token),
-    db: Session = Depends(get_db),
-) -> Dict[str, Any]:
-    """Verifica si el usuario dentro del refresh_token es un usuario válido (existe en la DB)"""
-    user = users_service.get_user(db, refresh_token.user_id)
-    if not user:
-        raise exceptions.RefreshTokenNotValid()
-
-    return user
-
 
 async def has_role(
     role_name: str,

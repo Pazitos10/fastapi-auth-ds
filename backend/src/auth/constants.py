@@ -7,7 +7,7 @@ class ErrorCode:
     AUTHORIZATION_FAILED = "La autorización ha fallado. El usuario no tiene acceso"
     INVALID_TOKEN = "Token inválido"
     INVALID_CREDENTIALS = "Credenciales inválidas"
-    REFRESH_TOKEN_NOT_VALID = "El refresh token es inválido"
+    REFRESH_TOKEN_NOT_VALID = "Tu sesión ha caducado. Inicia sesión nuevamente."
     REFRESH_TOKEN_REQUIRED = "El refresh token es requerido en el body o en las cookies"
     INVALID_PASSWORD_TOKEN = "El token para actualizcación de password es inválido"
     EMAIL_AUTHENTICATION_REQUIRED = "Ha ocurrido un problema con la autenticación de la cuenta de email del servidor."

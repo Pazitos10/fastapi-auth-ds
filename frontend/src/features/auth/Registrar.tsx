@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { useAuth } from "../../hooks";
 
 
@@ -8,6 +8,7 @@ export const Registrar = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [username, setUsername] = useState('');
+    const navigate = useNavigate();
 
     // const { login } = useAuth(); // (Assuming your logic hook)
 
@@ -15,6 +16,7 @@ export const Registrar = () => {
         e.preventDefault();
         register({ username, email, password });
         console.log('Creando cuenta:', { username, email, password });
+        navigate("/iniciar-sesion", { replace: true });
     };
 
     return (

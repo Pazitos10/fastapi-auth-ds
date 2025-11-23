@@ -1,17 +1,12 @@
-from fastapi import Depends, APIRouter, Request, Response, exceptions
+from typing import Dict
+from fastapi import Depends, APIRouter, Response
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
-from typing import Dict, Any
 from src.database import get_db
 from src.settings import get_delete_token_settings, get_refresh_token_settings
-from src.auth import service
-from src.auth import schemas
+from src.auth import service, schemas, exceptions
 from src.auth.utils import create_access_token, create_refresh_token
-from src.auth.dependencies import (
-    valid_refresh_token, 
-    valid_refresh_token_user, 
-    get_current_user
-)
+from src.auth.dependencies import get_refresh_user, get_current_user
 from src.users import schemas as users_schemas
 from src.users import service as users_service
 
@@ -36,17 +31,13 @@ async def login(
 async def refresh_tokens(
     response: Response,
     db: Session = Depends(get_db),
-    user=Depends(valid_refresh_token_user),
-    refresh_token=Depends(valid_refresh_token),
+    user=Depends(get_refresh_user),
 ):
     new_access_token = create_access_token(user)
-    new_refresh_token = await create_refresh_token(
-        db, refresh_token.user_id
-    )
-    response.set_cookie(**get_refresh_token_settings(new_access_token))
+    new_refresh_token = await create_refresh_token(db, user.id)
     response.set_cookie(**get_refresh_token_settings(new_refresh_token))
 
-    return schemas.Token(access_token=new_access_token, refresh_token=new_refresh_token)
+    return schemas.Token(access_token=new_access_token, user_id=user.id)
 
 
 @router.post("/register", response_model=users_schemas.User)
@@ -56,13 +47,8 @@ def register_user(user: users_schemas.UserCreate, db: Session = Depends(get_db))
 
 
 @router.delete("/token")
-async def logout_user(
-    response: Response,
-    #refresh_token: str = Depends(valid_refresh_token),
-) -> dict:
-    response.delete_cookie(
-        **get_delete_token_settings()
-    )
+async def logout_user(response: Response) -> Dict:
+    response.delete_cookie(**get_delete_token_settings())
 
     return {
         "msg": "La sesión se ha cerrado exitosamente!",
@@ -96,11 +82,7 @@ async def password_reset(
 
 
 @router.get("/validate-user", response_model=schemas.Token)
-async def validate_user(
-    response: Response,
-    auth_user=Depends(get_current_user),
-    db: Session = Depends(get_db),
-) -> schemas.Token:
+async def validate_user(auth_user=Depends(get_current_user)) -> schemas.Token:
     if auth_user:
         access_token = create_access_token(auth_user)
         return schemas.Token(access_token=access_token, user_id=auth_user.id)

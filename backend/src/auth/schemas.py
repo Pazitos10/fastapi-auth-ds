@@ -35,6 +35,5 @@ class PasswordUpdated(BaseModel):
 
 
 class PasswordResetData(BaseModel):
+    current_password: Optional[str] = None
     new_password: str
-    password: Optional[str] = None
-    user_id: Optional[int] = None
