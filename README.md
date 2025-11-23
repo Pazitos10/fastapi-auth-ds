@@ -1,6 +1,6 @@
 ## fastapi-auth-ds
 
-Este proyecto está pensado para ser integrado a otros que utilicen como base `fastapi-base-ds`.
+Este proyecto está pensado para ser integrado a otros que utilicen como base `fastapi-base-ds`. Hace mención a conceptos y utiliza porciones de código del proyecto [`RA-grupo-5`](https://github.com/UNPSJB/RA-grupo-5/tree/main) para la gestión de reportes académicos (Desarrollo de software - 2025). 
 
 ### Backend
 
