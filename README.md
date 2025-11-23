@@ -1,8 +1,8 @@
-### fastapi-auth-ds
+## fastapi-auth-ds
 
 Este proyecto está pensado para ser integrado a otros que utilicen como base `fastapi-base-ds`.
 
-#### Backend
+### Backend
 
 En el directorio backend, encontraremos dos módulos:
 - `auth`: permite realizar las operaciones de autenticación/autorización como: registro de usuarios, cambio de contraseña, login y logout. También gestiona la creación/actualización de tokens de autenticación por medio de cookies.
@@ -12,7 +12,7 @@ En la raíz del proyecto encontraremos dos archivos que no estan presentes en `f
 - `settings.py`: se encarga de leer las variables de entorno para configurar el proyecto y poner a disposición los valores de las mismas a través de constantes y funciones (por ejemplo para la creación de cookies). Centraliza la lectura de variables de entorno.
 - Script de carga para datos de prueba `load_data.py`: Crea instancias de roles y por cada rol, un usuario.
  
-#### Frontend
+### Frontend
 
 Por otra parte, el directorio frontend tiene la siguiente estructura:
 - `components`
@@ -26,7 +26,7 @@ Por otra parte, el directorio frontend tiene la siguiente estructura:
 - `layouts`: un layout básico que comprueba que para renderizar el contenido de la app, el usuario haya iniciado sesión o de lo contrario será redirigido a la página para hacerlo. Ver: `frontend/src/layouts/AuthLayout.tsx`.
 - `types`: La estructura de datos para los diferentes tipos utilizados en el proyecto están definidos en `frontend/src/types`.
 
-#### ¿Cómo se ejecuta? 
+### ¿Cómo se ejecuta? 
 
 Al tratarse de dos aplicaciones (backend y frontend), debemos instalar las dependencias de las mismas por separado. 
 Para las dependencias del proyecto FastAPI, seguir las instrucciones del repositorio [`fastapi-base-ds`](https://github.com/Pazitos10/fastapi-base-ds) ya que siguen siendo válidas. 
@@ -40,9 +40,9 @@ Cada aplicación será ejecutada en un una ventana de línea de comandos distint
 
 **NOTA:** Se sobreentiende que para ejecutar dichos comandos se debe estar en el directorio correcto, las dependencias instaladas y entornos virtuales activados (si corresponde).
 
-#### ¿Cómo lo integro a mi proyecto?
+### ¿Cómo lo integro a mi proyecto?
 
-##### Backend
+#### Backend
 Para empezar, será necesario copiar los módulos `auth` y `users` al directorio correspondiente al backend en el proyecto al cual quiero intregrarlo.
 Serán necesarias las siguientes modificaciones:
 - Añadir routers de los nuevos módulos al archivo `main.py`.
@@ -93,7 +93,7 @@ Si la condición de que el usuario tenga rol "docente" no se cumple, la api lanz
 
 Podemos utilizar y extender el funcionamiento de `has_role()` según lo creamos conveniente, siempre y cuando dejemos funciones como `tiene_rol_docente()` y similares en el archivo `src/auth/dependencies.py` para mantener la organización del proyecto.
 
-¿Cómo funciona esto?
+#### ¿Cómo funciona esto?
 Si seguimos la cadena de dependencias de las funciones, nos toparemos con que `tiene_rol_docente` "depende de" `get_current_user` para poder acceder al objeto `user`.
 Por su parte `get_current_user`, abrirá el access token (JWT) e intentará recuperar información del usuario para buscarlo en la DB. Si el usuario no existiera o el token fuera inválido, lanzará una excepción que rechazará el request y detendrá el procesamiento del mismo.
 
@@ -119,7 +119,7 @@ async def get_current_user(
 ```
 Si el usuario es encontrado, es devuelto por parámetros a `tiene_rol_docente` y el procesamiento sigue en esa función.
 
-##### Frontend
+#### Frontend
 
 Las modificaciones a realizar a nuestro proyecto original dependerán en gran parte de como este esté organizado por lo que es posible que ubiquemos componentes, layouts, menu, etc. en una estructura diferente a la que se presenta en este repositorio.
 Lo más relevante es la correcta utilización de componentes como `ProtectedRoute`, `AuthLayout`,  `AuthProvider` (ver `main.tsx`) y el hook `useAuth()` para poder tomar provecho de la información del usuario logueado en cualquier componente en el que nos encontremos.
@@ -157,5 +157,5 @@ El hook `useAuth` tiene a disposición variables de estado/setters como `error`/
 
 Finalmente, los componentes que devuelve JSX o TSX deben ser adaptados para que utilicen los mismos componentes con estilo que utilice nuestro proyecto ya que en este repositorio solo cuentan con HTML/CSS básico para los fines demostrativos. 
 
-#### TODO:
+### TODO:
 - [ ] Por cuestiones de tiempo, la implementación de la funcionalidad para la recuperación de contraseñas por medio de e-mail no está terminada aunque hay componentes como `RecuperarPassword` y `NuevaPassword` y endpoints en `backend/src/auth/router.py` pensados para este fin.
