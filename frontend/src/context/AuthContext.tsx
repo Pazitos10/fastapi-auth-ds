@@ -9,6 +9,7 @@ const defaultContextValue: AuthContextType = {
     isLoading: false,
     isAuthenticated: false,
     error: null,
+    setIsLoading: () => null,
     setError: () => null,
     login: async () => false,
     logout: async () => null,
@@ -202,7 +203,7 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
     }, [setError, setIsLoading]);
 
     return (
-        <AuthContext.Provider value={{ currentUser, isAuthenticated, isLoading, error, setError, login, logout, register, resetPassword }}>
+        <AuthContext.Provider value={{ currentUser, isAuthenticated, isLoading, setIsLoading, error, setError, login, logout, register, resetPassword }}>
             {children}
         </AuthContext.Provider>
     );

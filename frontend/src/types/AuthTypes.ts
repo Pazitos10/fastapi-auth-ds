@@ -19,6 +19,7 @@ export interface AuthContextType {
     isLoading: boolean;
     error: string | null;
     isAuthenticated: boolean;
+    setIsLoading: (value: boolean | null) => void;
     setError: (value: string | null) => void;
     login: (loginData: LoginData) => Promise<boolean>;
     logout: () => Promise<void>;
