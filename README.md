@@ -213,7 +213,7 @@ export function useEncuestas({ alumnoId: number }) {
   const fetchEncuestas = async () => {
     try {
       setIsLoading(true);
-      const response = await api.get(`${ENCUESTAS_URL}?alumno=${alumnoId}`, ); // Asumiendo que la url sigue un patrón como .../encuestas-asignaturas?alumno=1, donde alumnoId = 1.
+      const response = await api.get(`${ENCUESTAS_URL}?alumno=${alumnoId}`); // Asumiendo que la url sigue un patrón como .../encuestas-asignaturas?alumno=1, donde alumnoId = 1.
       const data = await response.data;
       setEncuestas(data);
       setError(null);
