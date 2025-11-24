@@ -151,13 +151,100 @@ Por supuesto, esto requeriría modificar el hook `useEncuestas` para:
 
 - Recibir el id por parámetro
 - Modificar la URL que este consulta para incluir este nuevo parámetro. Utilizar constantes definidas en `constants/api.ts`
-- Incluir el access token en el request con `credentials: 'include'` si usamos [fetch](https://developer.mozilla.org/es/docs/Web/API/Fetch_API/Using_Fetch#enviar_una_petici%C3%B3n_con_credenciales_incluido) o `withCredentials: true` si usamos [axios](https://axios-http.com/es/docs/req_config).
+- Utilizar la instancia del objeto `api` para realizar los requests ya que esta enviará las credenciales necesarias para consultar endpoints protegidos y se encargará de renovar los tokens de acceso cuando sea requerido.
 
-El hook `useAuth` tiene a disposición variables de estado/setters como `error`/`setError` y `isLoading`/`setIsLoading` que podemos reutilizar para mostrar mensajes de error o de contenido especial para cuando la API está demorando en contestar algún request.
+Al mismo tiempo, el hook `useAuth` tiene a disposición variables de estado/setters como `error`/`setError` y `isLoading`/`setIsLoading` que podemos reutilizar para mostrar mensajes de error o de contenido especial para cuando la API está demorando en contestar algún request.
 
 Por otra parte, en la ruta consultada por `useEncuestas` debería hacerse el control del rol del usuario para que solo pueda acceder a las encuestas si tiene el rol "alumno", al mismo tiempo que filtrarlas para devolver solo aquellas que le pertenecen al usuario en cuestión.
 
+Con lo cual, `useEncuestas` pasaría de verse así: 
+
+```ts
+// import ...
+
+export function useEncuestas() {
+
+  const [encuestas, setEncuestas] = useState<EncuestaAsignatura[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const API_URL = "http://localhost:8000/encuestas-asignaturas"; // URL de la lista
+
+  const fetchEncuestas = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(API_URL);
+      if (!response.ok) {
+        throw new Error("Error al obtener las encuestas");
+      }
+      const data = await response.json();
+      setEncuestas(data);
+      setError(null);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    fetchEncuestas();
+  }, []);
+
+  return {
+    encuestas,
+    loading,
+    error,
+    refetch: fetchEncuestas,
+  };
+}
+```
+
+A verse de la siguiente forma:
+
+```ts
+//... 
+import { ENCUESTAS_URL } from 'constants/api.ts';
+
+export function useEncuestas({ alumnoId: number }) {
+
+  const [ encuestas, setEncuestas ] = useState<EncuestaAsignatura[]>([]);
+  const { isLoading, setIsLoading, error, setError, api } = useAuth();
+  
+  const fetchEncuestas = async () => {
+    try {
+      setIsLoading(true);
+      const response = await api.get(`${ENCUESTAS_URL}?alumno=${alumnoId}`, ); // Asumiendo que la url sigue un patrón como .../encuestas-asignaturas?alumno=1, donde alumnoId = 1.
+      const data = await response.data;
+      setEncuestas(data);
+      setError(null);
+    } catch (err: AxiosError) {
+      setError(err?.response?.data?.detail);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  //...
+}
+```
+
+Nótense: 
+- La invocación a `api.get()` en lugar de `fetch()`, 
+- Cómo se obtienen los datos desde el response en el bloque de éxito (`try {...}`)
+- Cómo se manejan los errores en el bloque `catch`, donde las excepciones que lanzamos desde la api (ver `exceptions.py` en este repositorio y en [`fastapi-base-ds`](https://github.com/Pazitos10/fastapi-base-ds) contienen un atributo detail con el mensaje que vuelve desde la API.
+
 Finalmente, los componentes que devuelve JSX o TSX deben ser adaptados para que utilicen los mismos componentes con estilo que utilice nuestro proyecto ya que en este repositorio solo cuentan con HTML/CSS básico para los fines demostrativos. 
+
+### Referencias:
+Aquí algunos videos utilizados para entender y ver en funcionamiento los conceptos involucrados para este proyecto en referencia a React:
+
+- [Role-Based Authentication in React (Complete Tutorial) - Cosden Solutions](https://www.youtube.com/watch?v=-IqMxPU3vbU).
+- [Authentication in React with JWTs, Access & Refresh Tokens (Complete Tutorial) - Cosden Solutions](https://www.youtube.com/watch?v=AcYF18oGn6Y).
+- [Learn React Hooks: useContext - Simply Explained! - Cosden Solutions](https://www.youtube.com/watch?v=HYKDUF8X3qI).
+- [Custom Hooks in React (Design Patterns) - Cosden Solutions](https://www.youtube.com/watch?v=I2Bgi0Qcdvc).
+- [Creando Custom Hooks y usando Context para conseguir un estado global en ReactJS - midudev](https://www.youtube.com/watch?v=2qgs7buSnHQ)
+- [Tienda y Carrito con React + Estado Global con useContext + Manejo de estado con useReducer - midudev](https://www.youtube.com/watch?v=B9tDYAZZxcE)
 
 ### TODO:
 - [ ] Por cuestiones de tiempo, la implementación de la funcionalidad para la recuperación de contraseñas por medio de e-mail no está terminada aunque hay componentes como `RecuperarPassword` y `NuevaPassword` y endpoints en `backend/src/auth/router.py` pensados para este fin.
+

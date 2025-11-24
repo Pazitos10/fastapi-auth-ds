@@ -1,3 +1,4 @@
+import { AxiosInstance } from 'axios';
 import type { User } from "./UserTypes";
 
 export interface LoginData {
@@ -19,12 +20,13 @@ export interface AuthContextType {
     isLoading: boolean;
     error: string | null;
     isAuthenticated: boolean;
-    setIsLoading: (value: boolean | null) => void;
+    setIsLoading: (value: boolean) => void;
     setError: (value: string | null) => void;
     login: (loginData: LoginData) => Promise<boolean>;
     logout: () => Promise<void>;
     register: (registerData: RegisterData) => Promise<boolean>;
     resetPassword: (resetPasswordData: ResetPasswordData) => Promise<boolean>;
+    api: AxiosInstance;
 }
 
 export interface ValidateUserData {

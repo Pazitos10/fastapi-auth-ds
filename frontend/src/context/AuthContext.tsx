@@ -4,20 +4,7 @@ import type { AuthContextType, LoginData, RegisterData, ResetPasswordData } from
 import type { User } from "../types/UserTypes";
 import { API_BASE_URL, REFRESH_TOKEN_URL, LOGIN_API_URL, VALIDATE_USER_URL, USER_API_URL, LOGOUT_API_URL, REGISTER_API_URL, RESET_PASSWORD_API_URL } from "../constants/api";
 
-const defaultContextValue: AuthContextType = {
-    currentUser: null,
-    isLoading: false,
-    isAuthenticated: false,
-    error: null,
-    setIsLoading: () => null,
-    setError: () => null,
-    login: async () => false,
-    logout: async () => null,
-    register: async () => false,
-    resetPassword: async () => false
-}
-
-const AuthContext = createContext<AuthContextType>(defaultContextValue);
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [currentUser, setCurrentUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -25,7 +12,6 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
     const [error, setError] = useState<string | null>(null);
     const [token, setToken] = useState<string | null>();
     const tokenRefreshedRef = useRef(false);
-    const isRefreshingRef = useRef(false);
     const api = useMemo(() => axios.create({
         baseURL: API_BASE_URL,
         timeout: 5000,
@@ -35,7 +21,7 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
     const fetchCurrentUser = useCallback(async (userId: string, tempToken: string | null = null) => {
         const headers = tempToken ? { Authorization: `Bearer ${tempToken}` } : {};
         const response = await api.get(`${USER_API_URL}/${userId}`, { headers: headers, withCredentials: true });
-    
+
         setCurrentUser(response.data);
         setIsAuthenticated(true);
         setError(null);
@@ -94,7 +80,7 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
             (response) => response,
             async (error) => {
                 const originalRequest = error.config;
-                
+
                 setError(null);
                 if ((error.response.status == 403 || error.response.status == 401) && originalRequest.url != REFRESH_TOKEN_URL) {
                     try {
@@ -110,8 +96,7 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
                         setError(refreshError.response?.data.detail);
                         setToken(null);
                         setIsAuthenticated(false);
-                        //setIsLoading(false);
-                    } 
+                    }
                 }
                 return Promise.reject(error);
             }
@@ -203,7 +188,7 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
     }, [setError, setIsLoading]);
 
     return (
-        <AuthContext.Provider value={{ currentUser, isAuthenticated, isLoading, setIsLoading, error, setError, login, logout, register, resetPassword }}>
+        <AuthContext.Provider value={{ currentUser, isAuthenticated, isLoading, setIsLoading, error, setError, login, logout, register, resetPassword, api }}>
             {children}
         </AuthContext.Provider>
     );
@@ -211,6 +196,5 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 
 export {
     AuthContext,
-    AuthProvider,
-    defaultContextValue
+    AuthProvider
 }
