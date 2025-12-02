@@ -138,24 +138,14 @@ export default function EncuestasPendientes() {
   //...
 ```
 
-Podríamos modificarlo para que el hook `useEncuestas()` recupere únicamente las encuestas del usuario logueado. Para eso podríamos pasarle por parámetro el id del usuario actual:
-
-```tsx
-export default function EncuestasPendientes() {
-  const { currentUser } = useAuth();
-  const { encuestas, loading, error } = useEncuestas(currentUser.id);
-
-  //...
-```
-Por supuesto, esto requeriría modificar el hook `useEncuestas` para:
-
-- Recibir el id por parámetro
-- Modificar la URL que este consulta para incluir este nuevo parámetro. Utilizar constantes definidas en `constants/api.ts`
-- Utilizar la instancia del objeto `api` para realizar los requests ya que esta enviará las credenciales necesarias para consultar endpoints protegidos y se encargará de renovar los tokens de acceso cuando sea requerido.
+Podríamos modificarlo para que el hook `useEncuestas()` recupere únicamente las encuestas del usuario logueado. Para eso, utilizando `useAuth`, podríamos obtener:
+- El objeto currentUser para acceder al id del usuario y modificar la URL que este consulta para incluir este valor. 
+- La instancia del objeto `api` para realizar los requests ya que esta enviará las credenciales necesarias para consultar endpoints protegidos y se encargará de renovar los tokens de acceso cuando sea requerido.
+- Armar las URLs a consultar con constantes definidas en `constants/api.ts`
 
 Al mismo tiempo, el hook `useAuth` tiene a disposición variables de estado/setters como `error`/`setError` y `isLoading`/`setIsLoading` que podemos reutilizar para mostrar mensajes de error o de contenido especial para cuando la API está demorando en contestar algún request.
 
-Por otra parte, en la ruta consultada por `useEncuestas` debería hacerse el control del rol del usuario para que solo pueda acceder a las encuestas si tiene el rol "alumno", al mismo tiempo que filtrarlas para devolver solo aquellas que le pertenecen al usuario en cuestión.
+Por otra parte en el backend, la ruta consultada por `useEncuestas` debería hacer el control del rol del usuario para que solo pueda acceder a las encuestas si tiene el rol "alumno", al mismo tiempo que filtrarlas para devolver solo aquellas que le pertenecen al usuario en cuestión.
 
 Con lo cual, `useEncuestas` pasaría de verse así: 
 
@@ -199,21 +189,21 @@ export function useEncuestas() {
 }
 ```
 
-A verse de la siguiente forma:
+A verse aproximadamente así:
 
 ```ts
 //... 
 import { ENCUESTAS_URL } from 'constants/api.ts';
 
-export function useEncuestas({ alumnoId: number }) {
+export function useEncuestas() {
 
   const [ encuestas, setEncuestas ] = useState<EncuestaAsignatura[]>([]);
-  const { isLoading, setIsLoading, error, setError, api } = useAuth();
+  const { currentUser, isLoading, setIsLoading, error, setError, api } = useAuth();
   
   const fetchEncuestas = async () => {
     try {
       setIsLoading(true);
-      const response = await api.get(`${ENCUESTAS_URL}?alumno=${alumnoId}`); // Asumiendo que la url sigue un patrón como .../encuestas-asignaturas?alumno=1, donde alumnoId = 1.
+      const response = await api.get(`${ENCUESTAS_URL}?alumno=${currentUser.id}`); // Asumiendo que la url sigue un patrón como .../encuestas-asignaturas?alumno=1, donde currentUser.id = 1.
       const data = await response.data;
       setEncuestas(data);
       setError(null);
